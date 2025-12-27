@@ -8,7 +8,7 @@ Key features:
 - Error handling to provide details about incorrect input. 
 
 Usage:
-The program looks for a file named "Maze.txt" (which is provided in the repo) in the same folder as the code. In this file, the first line contains two integers which are the number of rows and columns on the maze, and the other lines represent the maze.
+The program is called with a command line parameter <filename.txt>. In this input file (which can be found in the repo), the first line contains two integers which are the number of rows and columns on the maze, and the other lines represent the maze.
 
 Maze representation:
 * -> Walls
