@@ -15,6 +15,8 @@ typedef enum state {
 
 state** read_maze(char* fileloc, int* start_i, int* start_j, int* nr, int* nc) {
     FILE* fp = fopen(fileloc, "r");
+    int n_start = 0;
+    int n_target = 0;
     if (fp == NULL) {
         printf("Cannot read file.");
         exit(-1);
@@ -24,9 +26,11 @@ state** read_maze(char* fileloc, int* start_i, int* start_j, int* nr, int* nc) {
     state** maze = malloc(sizeof(state*) * *nr);
     for (int i = 0; i < *nr; i++)
         maze[i] = malloc(sizeof(state) * *nc);
-    for (int i = 0; i < *nr; i++) {
+    c = fgetc(fp);
+    if (c == '\n')
+        c = fgetc(fp);
+    for (int i = 0; ; i++) {
         for (int j = 0; j < *nc; j++) {
-            while ((c = fgetc(fp)) == '\n');
 
             switch (c) {
                 case '*':
@@ -34,6 +38,7 @@ state** read_maze(char* fileloc, int* start_i, int* start_j, int* nr, int* nc) {
                     break;
                 case '#':
                     maze[i][j] = EXIT;
+                    n_target++;
                     break;
                 case ' ':
                     maze[i][j] = FREE;
@@ -42,18 +47,53 @@ state** read_maze(char* fileloc, int* start_i, int* start_j, int* nr, int* nc) {
                     maze[i][j] = PLAYER;
                     *start_i = i;
                     *start_j = j;
+                    n_start++;
                     break;
                 default:
-                    printf("Foreign character:%c", c);
-                    break;
+                    if (c == '\n')
+                        printf("Incorrect maze size. Try again with a different maze.");
+                    else
+                        printf("Foreign character:%c", c);
+                    exit(-1);
+
             }
-
-
+            if ((i == 0 || i == *nr - 1 || j == 0 || j == *nc - 1) && c != '*' && c != '#')
+            {
+                printf("Maze missing outer walls or incorrect maze size.");
+                exit(-1);
+            }
+            c = fgetc(fp);
         }
+        if (c == '\n')
+            c = fgetc(fp);
+        if (c == EOF)
+        {
+            if (i+1 != *nr ){
+                printf("Incorrect maze size. ");
+                exit(-1);
+            }
+            if (n_target == 0){
+                printf("Maze contains no targets.");
+                exit(-1);
+            }
+            if (n_target > 1){
+                printf("Maze contains more than one target.");
+                exit(-1);
+            }
+            if (n_start == 0){
+                printf("Maze contains no starting point.");
+                exit(-1);
+            }
+            if (n_start > 1){
+                printf("Maze contains multiple starting points.");
+                exit(-1);
+            }
+            fclose(fp);
+            return maze;
+        }
+
     }
 
-    fclose(fp);
-    return maze;
 }
 int to_1d(int i, int j, int n_row, int n_col) {
     return i * n_col + j;
@@ -161,7 +201,10 @@ int main(int argc, char* argv[]) {
     maze[start_i][start_j] = -1;
     printf("\n");
     print_shortest_path(maze, nr, nc, shortest_path, len_shortest_path);
-    printf("Length of the shortest path is:%d ", len_shortest_path);
+    if (len_shortest_path == -1)
+        printf("Cannot find a path. Try again with a different maze!");
+    else
+        printf("Length of the shortest path is:%d ", len_shortest_path);
     free_maze(maze, nr, nc);
     free(shortest_path);
 }
